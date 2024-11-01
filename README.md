@@ -86,6 +86,7 @@ unsafe fn hook_setup_SessionSystemSend() {
 
 # creating an object reprenstation with 'monomorphism'
 ```rust
+// Mono macro
 // polymorphism in rust is not built in. to avoid boilerplate code as much as possible
 // marking field with #[base] simply sets target for Deref trait. dereferencing all fields and methods from 'parent'.
 
@@ -116,7 +117,7 @@ impl MoveRequest {
 
 # finding and calling a method
 ```rust
-il2cpp_farproc! is helper macro for reinterpreting c call on 32bit and fastcall on 64bit
+// il2cpp_farproc! is helper macro for reinterpreting c call on 32bit and fastcall on 64bit
 fn send_to_session(session: &mut Session, module: &Il2cppObject) -> bool { unsafe {
     class::get_method_pointer_by_name(&GAME_SESSION_SYSTEM, "Send", 2) // +1 if calling non-static method (this, args...)
         .inspect(|mptr| il2cpp_farproc!(fn(&Session, &Il2cppObject), *mptr) (session, module))
