@@ -86,7 +86,7 @@ unsafe fn hook_setup_SessionSystemSend() {
 
 # creating an object reprenstation with 'monomorphism'
 ```rust
-// polymorphism in rust is not built in. to avoid boiler plate code as much as possible
+// polymorphism in rust is not built in. to avoid boilerplate code as much as possible
 // marking field with #[base] simply sets target for Deref trait. dereferencing all fields and methods from 'parent'.
 
 // still, trait boundaries will require manual implementation.
