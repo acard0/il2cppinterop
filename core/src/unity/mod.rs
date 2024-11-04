@@ -7,6 +7,7 @@ pub mod transform;
 pub mod rigidbody;
 pub mod layer_mask;
 pub mod object;
+pub mod time;
 pub mod definitions;
 
 pub mod obfuscators;
