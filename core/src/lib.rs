@@ -44,7 +44,7 @@ pub unsafe fn initialize(base: HMODULE, timeout: Option<Duration>) -> bool {
 
             GLOBALS.m_assembly = GetModuleHandleA(sz_assembly).unwrap_or_default();
             m_seconds_waited += 1;
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(350));
         }
 
         log::info!("{} located at {:p}", IL2CPP_MAIN_MODULE.as_str(), GLOBALS.m_assembly.0 as *mut usize);
@@ -133,6 +133,7 @@ unsafe fn initialize_unity() -> bool {
     rigidbody::initialize();
     transform::initialize();
     callback::initialize();
+    time::initialize();
     mem::initialize().unwrap();
     cache::system_type_cache::initializer::pre_cache();
     true
