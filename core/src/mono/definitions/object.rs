@@ -26,10 +26,7 @@ where
     F: Fn(*mut c_void) -> bool + Send + Sync + 'static,
 {
     let pattern = (repr as *const Il2cppClass).as_array_of_byte_pattern();
-    let base = repr as *const Il2cppClass as usize;
-    let range = Some(base..base*5);
-
-    let candidates = mem::aob_query(&pattern, false, false, true, false, range)?;
+    let candidates = mem::aob_query(&pattern, false, false, true, false, None)?;
     let result = candidates.into_par_iter()
         .find_first(|&candidate| predicate(candidate as *mut c_void))
         .map(|candidate| candidate as *mut T);
