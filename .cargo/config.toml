@@ -1,3 +1,0 @@
-# uncomment for 32bit build or use cargo build --target=i686-pc-windows-msvc
-[build]
-target = "i686-pc-windows-msvc"
