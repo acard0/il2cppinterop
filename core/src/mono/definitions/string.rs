@@ -5,13 +5,15 @@ use getset::Getters;
 use il2cppinterop_macros::Mono;
 use widestring::U16CString;
 
-use crate::mono::{runtime::Il2cppObject, FUNCTIONS};
+use crate::mono::FUNCTIONS;
+
+use super::object::SystemObject;
 
 #[derive(Debug, Mono, Getters)]
 #[repr(C)]
 pub struct SystemString {
     #[base]
-    object: Il2cppObject,
+    object: SystemObject,
     #[getset(get = "pub with_prefix")]
     lenght: i32,
     #[debug("{}", self.to_string())]
