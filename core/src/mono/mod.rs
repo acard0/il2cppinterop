@@ -57,6 +57,7 @@ pub struct Functions {
     pub m_class_get_method_from_name: *mut c_void,
     pub m_class_get_property_from_name: *mut c_void,
     pub m_class_get_type: *mut c_void,
+    pub m_type_get_class: *mut c_void,
     pub m_domain_get: *mut c_void,
     pub m_domain_get_assemblies: *mut c_void,
     pub m_image_get_class: *mut c_void,

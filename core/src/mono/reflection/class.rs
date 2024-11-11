@@ -34,6 +34,10 @@ pub fn get_system_type(class: &Il2cppClass) -> Option<&mut SystemType> {
     get_type(class).and_then(|iltype| unsafe {il2cpp_farproc!(fn(&Il2cppType) -> *mut SystemType, FUNCTIONS.m_type_get_object)(iltype).as_mut() })
 }
 
+pub fn get_class_from_system_type(system_type: &SystemType) -> Option<&mut Il2cppClass> {
+    unsafe { il2cpp_farproc!(fn(&Il2cppType) -> *mut Il2cppClass, FUNCTIONS.m_type_get_class)(system_type.get_stype()).as_mut() }
+}
+
 pub fn get_from_name(image: *mut Il2cppImage, namespace: &str, name: &str) -> *mut Il2cppClass {
     let sz_namespace = CString::new(namespace).unwrap();
     let sz_name = CString::new(name).unwrap();

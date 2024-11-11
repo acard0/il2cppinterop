@@ -9,6 +9,7 @@ IL2CPP_RStr!(IL2CPP_CLASS_GET_METHODS, "il2cpp_class_get_methods");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_METHOD_FROM_NAME_EXPORT, "il2cpp_class_get_method_from_name");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_PROPERTY_FROM_NAME_EXPORT, "il2cpp_class_get_property_from_name");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_TYPE_EXPORT, "il2cpp_class_get_type");
+IL2CPP_RStr!(IL2CPP_TYPE_GET_CLASS_EXPORT, "il2cpp_class_from_type");
 IL2CPP_RStr!(IL2CPP_DOMAIN_GET_EXPORT, "il2cpp_domain_get");
 IL2CPP_RStr!(IL2CPP_DOMAIN_GET_ASSEMBLIES_EXPORT, "il2cpp_domain_get_assemblies");
 IL2CPP_RStr!(IL2CPP_IMAGE_GET_CLASS_EXPORT, "il2cpp_image_get_class");
