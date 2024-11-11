@@ -24,10 +24,13 @@ pub use platform::windows as sys;
 pub static mut EXPORT_OBFUSCATION: ExportObfuscationType = ExportObfuscationType::None;
 pub static mut ROT_OBFUSCATION_VALUE: i32 = -1;
 
-pub unsafe fn initialize(base: HMODULE, timeout: Option<Duration>) -> bool {
+pub unsafe fn initialize(timeout: Option<Duration>) -> bool {
+    log::info!("Initializing mem"); 
+    mem::initialize().unwrap();
+
     log::info!("Initializing il2cpp"); 
 
-    GLOBALS.m_base = base;
+    GLOBALS.m_base = GetModuleHandleA(PCSTR::null()).expect("GetModuleHandleA base module returned null");
     log::info!("Main module located at: {:p}", GLOBALS.m_base.0 as *mut usize);
     
     let sz_assembly = PCSTR(CString::new(IL2CPP_MAIN_MODULE.as_str()).unwrap().into_raw() as *mut c_uchar);
@@ -93,7 +96,7 @@ pub unsafe fn initialize(base: HMODULE, timeout: Option<Duration>) -> bool {
         return false;
     }
 
-    log::info!("Initialization complete");
+    log::info!("Initialization of il2cpp interop complete");
     true
 }
 
@@ -134,7 +137,7 @@ unsafe fn initialize_unity() -> bool {
     transform::initialize();
     callback::initialize();
     time::initialize();
-    mem::initialize().unwrap();
+
     cache::system_type_cache::initializer::pre_cache();
     true
 }
@@ -149,6 +152,7 @@ fn initialize_export_map() -> HashMap<String, &'static mut *mut c_void> { unsafe
     export_map.insert(IL2CPP_CLASS_GET_METHOD_FROM_NAME_EXPORT.to_string(), &mut FUNCTIONS.m_class_get_method_from_name);
     export_map.insert(IL2CPP_CLASS_GET_PROPERTY_FROM_NAME_EXPORT.to_string(), &mut FUNCTIONS.m_class_get_property_from_name);
     export_map.insert(IL2CPP_CLASS_GET_TYPE_EXPORT.to_string(), &mut FUNCTIONS.m_class_get_type);
+    export_map.insert(IL2CPP_TYPE_GET_CLASS_EXPORT.to_string(), &mut FUNCTIONS.m_type_get_class);
     export_map.insert(IL2CPP_DOMAIN_GET_EXPORT.to_string(), &mut FUNCTIONS.m_domain_get);
     export_map.insert(IL2CPP_DOMAIN_GET_ASSEMBLIES_EXPORT.to_string(), &mut FUNCTIONS.m_domain_get_assemblies);
     export_map.insert(IL2CPP_IMAGE_GET_CLASS_EXPORT.to_string(), &mut FUNCTIONS.m_image_get_class);
