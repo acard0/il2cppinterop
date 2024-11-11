@@ -3,7 +3,6 @@ use std::ffi::CString;
 
 use il2cppinterop_macros::Mono;
 use meta::*;
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{il2cpp_farproc, mono::{reflection::*, runtime::*, FUNCTIONS}, platform::mem::{self, AsArrayOfBytePattern}};
 
@@ -23,13 +22,13 @@ pub fn new_from_namespace<T>(namespace: &str) -> Option<&mut T> {
 pub fn find<T, F>(repr: &Il2cppClass, predicate: F) -> mem::Result<Option<*mut T>>
 where
     T: Sized,
-    F: Fn(*mut c_void) -> bool + Send + Sync + 'static,
+    F: Fn(*mut c_void) -> bool + Send + Sync,
 {
     let pattern = (repr as *const Il2cppClass).as_array_of_byte_pattern();
     let candidates = mem::aob_query(&pattern, false, false, true, false, None)?;
-    let result = candidates.into_par_iter()
-        .find_first(|&candidate| predicate(candidate as *mut c_void))
-        .map(|candidate| candidate as *mut T);
+    let result = candidates.iter()
+        .find(|&&candidate| predicate(candidate as *mut c_void))
+        .map(|&candidate| candidate as *mut T);
 
     Ok(result)
 }  
