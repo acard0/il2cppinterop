@@ -49,14 +49,14 @@ pub fn find_object_of_type_by_name<T>(class_path: &str, include_inactive: bool,)
 }
 
 pub fn get_mono_behaviour() -> &'static mut UnityComponent {
-    let objects = find_objects_of_type_by_name::<&UnityGameObject>(&UNITY_GAMEOBJECT_CLASS, false)
+    let objects = find_objects_of_type_by_name::<UnityGameObject>(&UNITY_GAMEOBJECT_CLASS, false)
         .expect("Failed to get UNITY_GAMEOBJECT_CLASS instances");
 
     if objects.is_empty() {
         panic!("Used find_objects_of_type_by_name::<CGameObject> to get UNITY_GAMEOBJECT_CLASS instances but got empty collection from il2cpp runtime");
     }
 
-    objects.into_iter().find_map(|&game_object| {
+    objects.into_iter().find_map(|game_object| {
         game_object.get_component_of_stype_at_index(&UNITY_MONOBEHAVIOUR_CLASS, 0)
     }).expect("Used get_component_of_stype_at_index to get UnityEngine.MonoBehaviour from an UnityGameObject but got none.")
 }

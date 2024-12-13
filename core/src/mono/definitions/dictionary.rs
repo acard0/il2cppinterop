@@ -1,6 +1,6 @@
 use std::ffi::c_void;
 
-use array::Il2cppArray;
+use array::{Il2cppArray, TArrayElement};
 use derive_more::derive::Debug;
 use getset::Getters;
 use il2cppinterop_macros::Mono;
@@ -9,9 +9,15 @@ use super::*;
 
 use crate::{mono::runtime::*, platform::mem::{CheckedMutPointer, CheckedRefPointer}};
 
+pub trait TKey: TArrayElement + PartialEq {}
+impl<K: TArrayElement + PartialEq> TKey for K {}
+
+pub trait TValue: TArrayElement {}
+impl<V: TArrayElement> TValue for V {}
+
 #[derive(Debug, Mono, Getters)]
 #[repr(C)]
-pub struct Il2cppDictionary<K: Sized + PartialEq, V: Sized> {
+pub struct Il2cppDictionary<K: TKey, V: TValue> {
     #[base]
     base: Il2cppObject,
     buckets: *mut Il2cppArray<i32>,
@@ -28,7 +34,7 @@ pub struct Il2cppDictionary<K: Sized + PartialEq, V: Sized> {
     sync_root: *mut Il2cppObject,
 }
 
-impl<K: PartialEq + Sized, V: Sized> Il2cppDictionary<K, V> {
+impl<K: TKey, V: TValue> Il2cppDictionary<K, V> {
     /// Returns a reference to the underlaying key-value pair array
     pub fn get_entries(&self) -> &Il2cppArray<Il2cppDictionaryEntry<K, V>> {
         unsafe { &*self.entries }
@@ -41,7 +47,7 @@ impl<K: PartialEq + Sized, V: Sized> Il2cppDictionary<K, V> {
 
     pub fn get_entry(&self, index: usize) -> Option<&Il2cppDictionaryEntry<K, V>> {
         self.get_entries().get(index)
-            .filter(|candidate| candidate.get_key().is_some())
+            .filter(|candidate| *candidate.get_hash_code() > 0)
     }
 
     pub fn get_entry_mut(&mut self, index: usize) -> Option<&mut Il2cppDictionaryEntry<K, V>> {
@@ -91,13 +97,13 @@ impl<K: PartialEq + Sized, V: Sized> Il2cppDictionary<K, V> {
 }
 
 pub struct Il2cppDictionaryIterator<'a, K, V>
-where K: PartialEq + Sized + 'a, V: Sized +'a
+where K: TKey + 'a, V: TValue +'a
 {
     dictionary: &'a Il2cppDictionary<K, V>,
     current_index: usize
 }
 
-impl<'a, K: PartialEq + Sized + 'a, V: Sized + 'a> Iterator for Il2cppDictionaryIterator<'a, K, V> {
+impl<'a, K: TKey + 'a, V: TValue + 'a> Iterator for Il2cppDictionaryIterator<'a, K, V> {
     type Item = &'a Il2cppDictionaryEntry<K, V>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -112,7 +118,7 @@ impl<'a, K: PartialEq + Sized + 'a, V: Sized + 'a> Iterator for Il2cppDictionary
     }
 }   
 
-impl<'a, K: PartialEq + Sized + 'a, V: Sized + 'a> IntoIterator for &'a Il2cppDictionary<K, V> {
+impl<'a, K: TKey + 'a, V: TValue + 'a> IntoIterator for &'a Il2cppDictionary<K, V> {
     type Item = &'a Il2cppDictionaryEntry<K, V>;
     type IntoIter = Il2cppDictionaryIterator<'a, K, V>;
 

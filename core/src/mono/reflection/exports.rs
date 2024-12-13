@@ -30,6 +30,10 @@ IL2CPP_RStr!(IL2CPP_ALLOC, "il2cpp_alloc");
 IL2CPP_RStr!(IL2CPP_FREE, "il2cpp_free");
 IL2CPP_RStr!(IL2CPP_GC_DISABLE, "il2cpp_gc_disable");
 IL2CPP_RStr!(IL2CPP_GC_ENABLE, "il2cpp_gc_enable");
+IL2CPP_RStr!(IL2CPP_GC_GET_USED_SIZE, "il2cpp_gc_get_used_size");
+IL2CPP_RStr!(IL2CPP_GC_GET_HEAP_SIZE, "il2cpp_gc_get_heap_size");
+IL2CPP_RStr!(IL2CPP_GC_CREATE_HANDLE, "il2cpp_gchandle_new");
+IL2CPP_RStr!(IL2CPP_GC_DESTROY_HANDLE, "il2cpp_gchandle_free");
 
 #[cfg(target_pointer_width = "64")]
 #[macro_export]

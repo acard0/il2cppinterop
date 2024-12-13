@@ -34,10 +34,10 @@ pub fn find(game_object_name: &str) -> Option<&'static mut UnityGameObject> {
     }
 }
 
-pub fn find_with_tag(game_object_tag: &str) -> Option<&mut Il2cppArray<&mut UnityGameObject>> {
+pub fn find_with_tag(game_object_tag: &str) -> Option<&mut Il2cppArray<UnityGameObject>> {
     let il2cpp_string = SystemString::new(game_object_tag);
-    unsafe { (il2cpp_farproc!(fn(*mut SystemString) -> *mut Il2cppArray<*mut UnityGameObject>, GAME_OBJECT_FUNCTIONS.m_find_game_objects_with_tag)
-        (il2cpp_string) as *mut Il2cppArray<&mut UnityGameObject>)
+    unsafe { (il2cpp_farproc!(fn(*mut SystemString) -> *mut Il2cppArray<UnityGameObject>, GAME_OBJECT_FUNCTIONS.m_find_game_objects_with_tag)
+        (il2cpp_string))
         .as_mut() 
     }
 }
@@ -74,7 +74,6 @@ impl UnityGameObject {
     pub fn get_component_of_type_at_index(&self, system_type: &SystemType, index: usize) -> Option<&mut UnityComponent> {
         self.get_components(system_type)
             .get_mut(index)
-            .and_then(|component_ref| Some(&mut **component_ref))
     }
     
     pub fn get_component_of_stype_at_index(&self, system_type_name: &str, index: usize) -> Option<&mut UnityComponent> {
@@ -90,10 +89,10 @@ impl UnityGameObject {
         }
     }
     
-    pub fn get_components(&self, system_type: &SystemType) -> &mut Il2cppArray<&mut UnityComponent> {
+    pub fn get_components(&self, system_type: &SystemType) -> &mut Il2cppArray<UnityComponent> {
         //void GetComponentsInternal(System.Type* type,bool useSearchTypeAsArrayReturnType,bool recursive,bool includeInactive,bool reverse,void* resultList);
-        unsafe { (il2cpp_farproc!(fn(&UnityGameObject, &SystemType, bool, bool, bool, bool, *mut c_void) -> *mut Il2cppArray<*mut UnityComponent>, GAME_OBJECT_FUNCTIONS.m_get_components)
-            (self, system_type, false, false, true, false, std::ptr::null_mut()) as *mut Il2cppArray<&mut UnityComponent>)
+        unsafe { (il2cpp_farproc!(fn(&UnityGameObject, &SystemType, bool, bool, bool, bool, *mut c_void) -> *mut Il2cppArray<UnityComponent>, GAME_OBJECT_FUNCTIONS.m_get_components)
+            (self, system_type, false, false, true, false, std::ptr::null_mut()) as *mut Il2cppArray<UnityComponent>)
             .as_mut()
             .expect("UnityGameObject::GetComponents returned null ptr")
         }

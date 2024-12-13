@@ -89,26 +89,27 @@ pub struct Il2cppClass {
 }
 
 impl Il2cppClass {
-    /// Gets raw address in il2cpp memory
-    pub fn as_raw_ptr(&self) -> *const c_void {
-        self as *const _ as *const c_void
-    }
-    
-    /// Gets raw address in il2cpp memory
-    pub fn as_raw_mut_ptr(&mut self) -> *mut c_void {
-        self as *mut _ as *mut c_void
-    }
-
     /// Gets class name
     pub fn get_class_name(&self) -> &str {
         unsafe { CStr::from_ptr(self.type_info.name).to_str().unwrap() }
     }
 
     /// Gets class namespace
-    pub fn get_class_namespace(&self) -> &str {
-        unsafe { CStr::from_ptr(self.type_info.namespace).to_str().unwrap() }
+    pub fn get_class_namespace(&self) -> Option<&str> {
+        unsafe { self.type_info.namespace.as_ref()
+            .and_then(|str| unsafe { CStr::from_ptr(str).to_str().ok() }) }
     }
 
+    /// Gets class path
+    pub fn get_class_path(&self) -> String {
+        let class = self.get_class_name();
+        self.get_class_namespace()
+            .map_or(
+                class.to_owned(),
+                |namespace| format!("{namespace}.{}", class)
+            )
+    }
+ 
     /// Gets class type information
     pub fn get_type_info(&self) -> &Il2cppClassTypeInformation {
         &self.type_info
@@ -122,6 +123,26 @@ impl Il2cppClass {
     /// Gets vtable
     pub fn get_vtable(&self) -> &[VirtualInvokeData; 255] {
         &self.vtable
+    }
+
+    /// Gets element class if self represents indexable
+    pub fn get_element_class(&self) -> Option<&Il2cppClass> {
+        unsafe { self.get_type_info().element_class.as_ref() }
+    }
+
+    /// Gets size of element represented by this indexable, zero if not an indexable
+    pub fn get_element_size(&self) -> usize {
+        unsafe { self.get_instance_info().element_size as usize }
+    }
+
+    /// Gets parent class
+    pub fn get_parent_class(&self) -> Option<&Il2cppClass> {
+        unsafe { self.get_type_info().parent.as_ref() }
+    }
+
+    /// Checks if this class represents a value type
+    pub fn is_value_type(&self) -> bool {
+        self.get_parent_class().is_some_and(|class| class.get_class_name() == "ValueType")
     }
 }
 

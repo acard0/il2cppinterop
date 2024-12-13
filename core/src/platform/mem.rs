@@ -3,7 +3,7 @@ use std::{ops::{Deref, DerefMut, Range}, sync::Arc};
 
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{Either, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use udbg::{error::UDbgError, memory::MemoryPage, pe::{MEM_COMMIT, MEM_IMAGE, MEM_MAPPED, MEM_PRIVATE, PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY, PAGE_GUARD, PAGE_NOACCESS, PAGE_READONLY, PAGE_READWRITE, PAGE_WRITECOPY}};
 
 pub type IEngine = dyn udbg::target::UDbgEngine;
@@ -43,30 +43,25 @@ pub fn uninitialize() -> Result<()> {
     Ok(())
 }
 
-pub fn aob_query(pattern_str: &str, mapped: bool, readable: bool, writable: bool, executable: bool, address_range: Option<Range<usize>>,) -> Result<Vec<usize>> {
+pub fn aob_query(pattern_str: &str,mapped: bool,readable: bool,writable: bool,executable: bool,address_range: Option<Range<usize>>,
+) -> Result<Vec<usize>> {
     let target = get_target()?;
-    let pages = filter_pages(&target.collect_memory_info(), mapped, readable, writable, executable, address_range,);
+    let pages = target.collect_memory_info();
+    let pages = filter_pages(&pages,mapped,readable,writable,executable,address_range,);
     let pattern = parse_pattern(pattern_str);
     let skip_table = build_skip_table_with_wildcards(&pattern);
 
-    if pages.is_empty() {
-        return Ok(vec![]);
-    }
-
     let addresses: Vec<usize> = pages
-        .par_iter()
-        .filter_map(|page| {
+        .flat_map(|page| {
             match read_bytes(page.base, page.size) {
-                Ok(buffer) => Some(
+                Ok(buffer) => Either::Left(
                     find_all_occurrences_with_wildcards(&buffer, &pattern, &skip_table)
-                        .into_iter()
-                        .map(|offset| page.base + offset)
-                        .collect::<Vec<_>>()
+                        .into_par_iter()
+                        .map(move |offset| page.base + offset),
                 ),
-                Err(_) => None,
+                Err(_) => Either::Right(rayon::iter::empty()),
             }
         })
-        .flatten()
         .collect();
 
     Ok(addresses)
@@ -97,44 +92,47 @@ pub fn bytes_to_pattern(bytes: &[u8]) -> String {
         .join(" ")
 }
 
-pub fn filter_pages(pages: &[MemoryPage], mapped: bool, readable: bool, writable: bool, executable: bool, address_range: Option<Range<usize>>) -> Vec<MemoryPage> {
-    pages
-        .par_iter()
-        .filter_map(|page| {
-            #[cfg(target_pointer_width = "64")]
-            let max_space: usize = 0x00007FFFFFFFFFFF;
-            #[cfg(target_pointer_width = "32")]
-            let max_space: usize = 0xFFFFFFFF;
+pub fn filter_pages<'a>(pages: &'a [MemoryPage],mapped: bool,readable: bool,writable: bool,executable: bool,address_range: Option<Range<usize>>,
+) -> impl ParallelIterator<Item = &'a MemoryPage> + 'a {
+    pages.par_iter().filter_map(move |page| {
+        #[cfg(target_pointer_width = "64")]
+        let max_space: usize = 0x00007FFFFFFFFFFF;
+        #[cfg(target_pointer_width = "32")]
+        let max_space: usize = 0xFFFFFFFF;
 
-            let is_valid = page.state == MEM_COMMIT
-                && page.base < max_space
-                && (page.protect & PAGE_GUARD) == 0
-                && (page.protect & PAGE_NOACCESS) == 0
-                && (page.type_ == MEM_PRIVATE || page.type_ == MEM_IMAGE)
-                && (!mapped || page.type_ == MEM_MAPPED)
-                && address_range.as_ref().map_or(true, |range| range.contains(&page.base));
+        let is_valid = page.state == MEM_COMMIT
+            && page.base < max_space
+            && (page.protect & PAGE_GUARD) == 0
+            && (page.protect & PAGE_NOACCESS) == 0
+            && (page.type_ == MEM_PRIVATE || page.type_ == MEM_IMAGE)
+            && (!mapped || page.type_ == MEM_MAPPED)
+            && address_range
+                .as_ref()
+                .map_or(true, |range| range.contains(&page.base));
 
-            if !is_valid {
-                return None;
-            }
+        if !is_valid {
+            return None;
+        }
 
-            let is_readable = (page.protect & PAGE_READONLY) > 0;
-            let is_writable = (page.protect & PAGE_READWRITE) > 0
-                || (page.protect & PAGE_WRITECOPY) > 0
-                || (page.protect & PAGE_EXECUTE_READWRITE) > 0
-                || (page.protect & PAGE_EXECUTE_WRITECOPY) > 0;
-            let is_executable = (page.protect & PAGE_EXECUTE) > 0
-                || (page.protect & PAGE_EXECUTE_READ) > 0
-                || (page.protect & PAGE_EXECUTE_READWRITE) > 0
-                || (page.protect & PAGE_EXECUTE_WRITECOPY) > 0;
+        let is_readable = (page.protect & PAGE_READONLY) > 0;
+        let is_writable = (page.protect & PAGE_READWRITE) > 0
+            || (page.protect & PAGE_WRITECOPY) > 0
+            || (page.protect & PAGE_EXECUTE_READWRITE) > 0
+            || (page.protect & PAGE_EXECUTE_WRITECOPY) > 0;
+        let is_executable = (page.protect & PAGE_EXECUTE) > 0
+            || (page.protect & PAGE_EXECUTE_READ) > 0
+            || (page.protect & PAGE_EXECUTE_READWRITE) > 0
+            || (page.protect & PAGE_EXECUTE_WRITECOPY) > 0;
 
-            if (is_readable && readable) || (is_writable && writable) || (is_executable && executable) {
-                Some(page.clone())
-            } else {
-                None
-            }
-        })
-        .collect()
+        if (is_readable && readable)
+            || (is_writable && writable)
+            || (is_executable && executable)
+        {
+            Some(page)
+        } else {
+            None
+        }
+    })
 }
 
 pub fn get_target() -> Result<Target> {

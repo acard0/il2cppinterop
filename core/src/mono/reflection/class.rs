@@ -102,7 +102,7 @@ pub fn fetch_classes(module_name: &str, namespace: Option<&str>) -> Vec<&'static
             let class = &*il2cpp_farproc!(fn(*mut Il2cppImage, usize) -> *mut Il2cppClass, FUNCTIONS.m_image_get_class)(image, i);
             match namespace {
                 Some(ns) => {
-                    (class.get_class_namespace() == ns).then_some(class)
+                    (class.get_class_namespace().is_some_and(|namespace| namespace == ns)).then_some(class)
                 }
                 _ => Some(class),
             }
@@ -112,7 +112,20 @@ pub fn fetch_classes(module_name: &str, namespace: Option<&str>) -> Vec<&'static
     vector
 }
 
+pub fn get_field(class: &Il2cppClass, name: &str) -> Option<&'static mut Il2cppFieldInfo> {
+    unsafe {
+        let c_member_name = CString::new(name).unwrap();
+        il2cpp_farproc!(fn(&Il2cppClass, *const i8) -> *mut Il2cppFieldInfo, FUNCTIONS.m_class_get_field_from_name)
+            (class, c_member_name.as_ptr())
+            .as_mut()
+    }
+}
+
 pub fn get_field_offset(class: &Il2cppClass, name: &str) -> Option<i32> {
+    get_field(class, name)
+        .map(|field| field.offset)
+
+    /*
     let mut iterator = null_mut();
     while let Some(field) = iterate_fields(class, &mut iterator).as_ref() {
         let field_name_cstr = unsafe { CStr::from_ptr(field.name) };
@@ -125,6 +138,7 @@ pub fn get_field_offset(class: &Il2cppClass, name: &str) -> Option<i32> {
     }
 
     None
+     */
 }
 
 pub fn get_field_offset_by_name(class_name: &str, name: &str) -> Option<i32> {

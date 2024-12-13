@@ -1,4 +1,4 @@
-use array::Il2cppArray;
+use array::{Il2cppArray, TArrayElement};
 use derive_more::derive::Debug;
 use il2cppinterop_macros::Mono;
 
@@ -6,9 +6,12 @@ use super::*;
 
 use crate::mono::runtime::*;
 
+/// Alias type for representing Mono member field, Il2cppList
+pub type MonoListXRef<T> = &'static Il2cppList<T>;
+
 #[derive(Debug, Mono)]
 #[repr(C)]
-pub struct Il2cppList<T: 'static> {
+pub struct Il2cppList<T: TArrayElement + 'static> {
     #[base]
     object: Il2cppObject,
     array: &'static mut Il2cppArray<T>,

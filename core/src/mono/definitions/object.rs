@@ -22,13 +22,19 @@ pub fn new_from_namespace<T>(namespace: &str) -> Option<&mut T> {
 pub fn find<T, F>(repr: &Il2cppClass, predicate: F) -> mem::Result<Option<*mut T>>
 where
     T: Sized,
-    F: Fn(*mut c_void) -> bool + Send + Sync,
+    F: Fn(*mut c_void) -> bool,
 {
-    let pattern = (repr as *const Il2cppClass).as_array_of_byte_pattern();
-    let candidates = mem::aob_query(&pattern, false, false, true, false, None)?;
-    let result = candidates.iter()
-        .find(|&&candidate| predicate(candidate as *mut c_void))
-        .map(|&candidate| candidate as *mut T);
+    let pattern = {
+        // ensure this gets dropped before call to aob_query
+        // otherwise it would result additional entry in query result
+        let location = repr as *const _ as usize;
+        location.as_array_of_byte_pattern()
+    };
+
+    let candidates: Vec<usize> = mem::aob_query(&pattern, false, false, true, false, None)?;
+    let result = candidates.into_iter()
+        .find(|&candidate| predicate(candidate as *mut c_void))
+        .map(|candidate| candidate as *mut T);
 
     Ok(result)
 }  

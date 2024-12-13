@@ -9,6 +9,8 @@ use crate::mono::FUNCTIONS;
 
 use super::object::SystemObject;
 
+pub type SystemStringXRef = &'static mut SystemString;
+
 #[derive(Debug, Mono, Getters)]
 #[repr(C)]
 pub struct SystemString {
@@ -17,7 +19,7 @@ pub struct SystemString {
     #[getset(get = "pub with_prefix")]
     lenght: i32,
     #[debug("{}", self.to_string())]
-    wide_string: [u16; 1024],
+    wide_string: [u16; 1024 * 1024],
 }
 
 impl SystemString {
@@ -37,7 +39,7 @@ impl SystemString {
 
     pub fn to_string(&self) -> String {
         #![allow(useless_ptr_null_checks)]
-        if self as *const _ == ptr::null() || self.lenght <= 0 {
+        if self as *const _ == ptr::null() || self.lenght <= 0 || self.lenght > 1024 * 1024 {
             return String::new();
         }
         let slice = &self.wide_string[..self.lenght as usize];
