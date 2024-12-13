@@ -78,6 +78,10 @@ pub struct Functions {
     pub m_free: *mut c_void,
     pub m_gc_disable: *mut c_void,
     pub m_gc_enable: *mut c_void,
+    pub m_gc_get_used_size: *mut c_void,
+    pub m_gc_get_heap_size: *mut c_void,
+    pub m_gc_create_handle: *mut c_void,
+    pub m_gc_destroy_handle: *mut c_void
 }
 
 pub struct Globals {

@@ -173,6 +173,10 @@ fn initialize_export_map() -> HashMap<String, &'static mut *mut c_void> { unsafe
     export_map.insert(IL2CPP_FREE.to_string(), &mut FUNCTIONS.m_free);
     export_map.insert(IL2CPP_GC_DISABLE.to_string(), &mut FUNCTIONS.m_gc_disable);
     export_map.insert(IL2CPP_GC_ENABLE.to_string(), &mut FUNCTIONS.m_gc_enable);
+    export_map.insert(IL2CPP_GC_GET_USED_SIZE.to_string(), &mut FUNCTIONS.m_gc_get_used_size);
+    export_map.insert(IL2CPP_GC_GET_HEAP_SIZE.to_string(), &mut FUNCTIONS.m_gc_get_heap_size);
+    export_map.insert(IL2CPP_GC_CREATE_HANDLE.to_string(), &mut FUNCTIONS.m_gc_create_handle);
+    export_map.insert(IL2CPP_GC_DESTROY_HANDLE.to_string(), &mut FUNCTIONS.m_gc_destroy_handle);
 
     export_map
 }}
