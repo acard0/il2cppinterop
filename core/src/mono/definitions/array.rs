@@ -1,23 +1,34 @@
-use std::{ffi::c_int, ptr};
+use std::{ffi::{c_int, c_void}, fmt::Debug, marker::PhantomData, ptr};
 
 use il2cppinterop_macros::Mono;
 
-use crate::mono::runtime::*;
+use crate::mono::{reflection::meta::Il2cppClass, runtime::*};
+
+pub trait TArrayElement: Sized {}
+impl<T: Sized> TArrayElement for T {}
+
+pub type MonoArrayXRef<T> = &'static Il2cppArray<T>;
 
 #[derive(Debug, Mono)]
 #[repr(C)]
-pub struct Il2cppArray<T: Sized> {
+pub struct Il2cppArray<T: TArrayElement> {
     #[base]
     object: Il2cppObject,           // 0x00
     bounds: *mut Il2cppArrayBounds, // 0x08
     capacity: usize,                // 0x0C
-    items: [T; 65355],              // 0x10
+    items: *mut c_void,             // 0x10
+    _marker: PhantomData<T>
 }
 
-impl<T> Il2cppArray<T> {
-    /// Gets first subsequent pointer that points to the item in this array
+impl<T: TArrayElement> Il2cppArray<T> {
+    /// Gets first subsequent mutable pointer that points to the item in this array
     pub fn get_data_head_mut(&mut self) -> *mut T {
-        &mut self.items as *mut T
+        self.get_data_head() as *mut T
+    }
+
+    /// Gets first subsequent pointer that points to the item in this array
+    pub fn get_data_head(&self) -> *const T {
+        &self.items as *const _ as *const *const c_void as *const T
     }
 
     /// Checks if the array is multi-dimensional.
@@ -46,6 +57,12 @@ impl<T> Il2cppArray<T> {
         }
     }
 
+    /// Gets element class of object this array holds
+    pub fn get_element_class(&self) -> &Il2cppClass {
+        self.object.get_element_class()
+            .expect("Il2cppArray::get_element_class returned none.")
+    }
+
     /// Retrieves the dimension information as a vector of `Il2cppArrayBounds`.
     pub fn get_dimensions(&self) -> Vec<Il2cppArrayBounds> {
         let num_dimensions = self.get_num_dimensions();
@@ -69,7 +86,7 @@ impl<T> Il2cppArray<T> {
     /// Gets a reference to the element at the given index.
     pub fn get(&self, index: usize) -> Option<&T> {
         match index < self.total_elements() {
-            true => self.items.get(index),
+            true => unsafe { self.element_at(index).as_ref() },
             false => None,
         }
     }
@@ -77,7 +94,7 @@ impl<T> Il2cppArray<T> {
     /// Gets a mutable reference to the element at the given index.
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         match index < self.total_elements() {
-            true => self.items.get_mut(index),
+            true => unsafe { self.element_at(index).as_mut() },
             false => None,
         }
     }
@@ -166,16 +183,26 @@ impl<T> Il2cppArray<T> {
             }
         }
     }
+
+    fn element_at(&self, index: usize) -> *mut T {unsafe {
+        let start = self.get_data_head() as *mut c_void;
+        let element_size = self.get_element_size();
+        let position = start.add((index * element_size) as usize) as *mut T;
+        match self.get_element_class().is_value_type() {
+            true => position, // value type
+            false => *(position as *mut *mut T) // ref type
+        }
+    }}
 }
 
 /// Iterator over the elements of an `Il2cppArray`.
-pub struct Il2cppArrayIterator<'a, T> {
+pub struct Il2cppArrayIterator<'a, T: TArrayElement> {
     array: &'a Il2cppArray<T>,
     total_elements: usize,
     current_index: usize,
 }
 
-impl<'a, T> Iterator for Il2cppArrayIterator<'a, T> {
+impl<'a, T: TArrayElement> Iterator for Il2cppArrayIterator<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -190,7 +217,7 @@ impl<'a, T> Iterator for Il2cppArrayIterator<'a, T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a Il2cppArray<T> {
+impl<'a, T: TArrayElement> IntoIterator for &'a Il2cppArray<T> {
     type Item = &'a T;
     type IntoIter = Il2cppArrayIterator<'a, T>;
 
