@@ -23,12 +23,12 @@ pub fn print_class_members(repr: &Il2cppClass, include_methods: bool) {
         }
 
         str.truncate(str.trim_end_matches(", ").len());
-        println!(">> {}", str);
+        log::info!(">> {}", str);
     }
 }
 
 
-pub fn intermediate_serialize(object: &SystemObject) {
+pub fn intermediate_serialize(object: &SystemObject) -> String {
     unsafe {
         let s_class = object.get_class_name();
 
@@ -36,11 +36,11 @@ pub fn intermediate_serialize(object: &SystemObject) {
 
         for field in class::get_fields(object) {
             if let Ok(s_field) = CStr::from_ptr(field.name).to_str() {
-                let value = object.get_member_value_by_field::<i32>(field);
+                let value = object.get_field_value::<i32>(field);
                 write!(str, "\"{}\":\"{:?}\", ", s_field, value).unwrap();
             }
         }
 
-        println!("{s_class}(@{object:p}) >> {{{str}}}");
+        format!("{s_class}(@{object:p}) >> {{{str}}}")
     }
 }

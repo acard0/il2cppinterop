@@ -16,6 +16,7 @@ parking_lot = "*"
 rayon = "*"
 thiserror = "*"
 getset = "*"
+paste = "1.0"
 derive_more = { version ="*", features = ["full"] }
 retour = { version = "0.3.1", features = ["static-detour"] }
 udbg = { git = "https://github.com/acard0/udbg" }

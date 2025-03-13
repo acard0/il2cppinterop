@@ -4,7 +4,7 @@ use std::{ffi::{c_void, CStr, CString}, ptr::null_mut};
 use meta::*;
 
 
-use crate::{il2cpp_farproc, mono::{definitions::stype::SystemType, FUNCTIONS}};
+use crate::{il2cpp_farproc, mono::{definitions::{object::ClassMemberType, stype::SystemType}, FUNCTIONS}};
 
 use super::*;
 
@@ -31,7 +31,11 @@ pub fn get_type(class: &Il2cppClass) -> Option<&'static Il2cppType> {
 }
 
 pub fn get_system_type(class: &Il2cppClass) -> Option<&mut SystemType> {
-    get_type(class).and_then(|iltype| unsafe {il2cpp_farproc!(fn(&Il2cppType) -> *mut SystemType, FUNCTIONS.m_type_get_object)(iltype).as_mut() })
+    get_type(class).and_then(|iltype| get_system_type_from_meta(iltype))
+}
+
+pub fn get_system_type_from_meta(type_: &Il2cppType) -> Option<&mut SystemType> {
+    unsafe {il2cpp_farproc!(fn(&Il2cppType) -> *mut SystemType, FUNCTIONS.m_type_get_object)(type_).as_mut() }
 }
 
 pub fn get_class_from_system_type(system_type: &SystemType) -> Option<&mut Il2cppClass> {
@@ -163,33 +167,69 @@ pub fn set_static_field_by_name(class_name: &str, member_name: &str, value: *mut
     find(class_name).and_then(|repr| Some(set_static_field(repr, member_name, value)))
 }
 
-pub fn get_static_field_value(class: &Il2cppClass, member_name: &str,) -> Option<*mut c_void> {
+pub fn get_static_field_value<T>(class: &Il2cppClass, member_name: &str,) -> Option<&'static mut T> {
     unsafe {
         let c_member_name = CString::new(member_name).unwrap();
         let field = il2cpp_farproc!(fn(&Il2cppClass, *const i8) -> *mut Il2cppFieldInfo, FUNCTIONS.m_class_get_field_from_name)
             (class, c_member_name.as_ptr());
 
         if !field.is_null() {
-            let mut value = null_mut();
-            il2cpp_farproc!(fn(*mut Il2cppFieldInfo, *mut *mut c_void),  FUNCTIONS.m_field_static_get_value)
-                (field, &mut value);
-            return Some(value);
+            let mut value = null_mut::<T>();
+            il2cpp_farproc!(fn(*mut Il2cppFieldInfo, *mut *mut T), FUNCTIONS.m_field_static_get_value)(field, &mut value);
+            return value.as_mut();
         }
 
         None
     }
 }
 
-pub fn get_static_field_value_by_name(class_name: &str, member_name: &str,) -> Option<*mut c_void> {
+pub fn get_static_field_value_by_name<T>(class_name: &str, member_name: &str,) -> Option<&'static mut T> {
     find(class_name).and_then(|repr| get_static_field_value(repr, member_name))
 }
 
+pub fn get_member_type(class: &Il2cppClass, member_name: &str,) -> Option<(*mut c_void, ClassMemberType)> {
+    let m_member_name = CString::new(member_name).unwrap();
+
+    unsafe {
+        let field = il2cpp_farproc!(
+            fn(&Il2cppClass, *const i8) -> *mut Il2cppFieldInfo,
+            FUNCTIONS.m_class_get_field_from_name
+        )(class, m_member_name.as_ptr());
+        if !field.is_null() {
+            return Some((field as *mut c_void, ClassMemberType::Field));
+        }
+
+        let property = il2cpp_farproc!(
+            fn(&Il2cppClass, *const i8) -> *mut Il2cppPropertyInfo,
+            FUNCTIONS.m_class_get_property_from_name
+        )(class, m_member_name.as_ptr());
+        if !property.is_null() {
+            return Some((property as *mut c_void, ClassMemberType::Property));
+        }
+
+        let method = il2cpp_farproc!(
+            fn(&Il2cppClass, *const i8, i32) -> *mut Il2cppMethodInfo,
+            FUNCTIONS.m_class_get_method_from_name
+        )(class, m_member_name.as_ptr(), -1);
+        if !method.is_null() {
+            return Some((method as *mut c_void, ClassMemberType::Method));
+        }
+
+        None
+    }
+}
+
+
 pub fn get_method_pointer(class: &Il2cppClass, method_name: &str, args: i32,) -> Option<*mut c_void> {
+    get_method(class, method_name, args)
+        .map(|info| info.method_pointer)
+}
+
+pub fn get_method(class: &Il2cppClass, method_name: &str, args: i32) -> Option<&'static mut Il2cppMethodInfo> {
     let c_method_name = CString::new(method_name).unwrap();
     unsafe { il2cpp_farproc!(fn(&Il2cppClass, *const i8, i32) -> *mut Il2cppMethodInfo, FUNCTIONS.m_class_get_method_from_name)
         (class, c_method_name.as_ptr(), args)
-        .as_ref()
-        .map(|repr| repr.method_pointer)
+        .as_mut()
     }
 }
 

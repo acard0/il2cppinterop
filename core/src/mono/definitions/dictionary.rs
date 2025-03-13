@@ -23,7 +23,7 @@ pub struct Il2cppDictionary<K: TKey, V: TValue> {
     buckets: *mut Il2cppArray<i32>,
     entries: *mut Il2cppArray<Il2cppDictionaryEntry<K, V>>,
     #[getset(get = "pub with_prefix")]
-    count: usize,
+    count: i32,
     free_list: i32,
     free_count: i32,
     #[getset(get = "pub with_prefix")]
@@ -84,12 +84,12 @@ impl<K: TKey, V: TValue> Il2cppDictionary<K, V> {
     {
         let entry_index = (0..self.count)
             .find(|&i| {
-                self.get_entry_mut(i)
+                self.get_entry_mut(i.try_into().unwrap())
                     .map_or(false, |entry| entry.get_key_mut().is_some_and(|key| *key == compare))
             });
 
         entry_index
-            .and_then(|i| self.get_entry_mut(i))
+            .and_then(|i| self.get_entry_mut(i.try_into().unwrap()))
             .map(|entry| entry.get_value_mut())
             .flatten()
     }
@@ -107,7 +107,7 @@ impl<'a, K: TKey + 'a, V: TValue + 'a> Iterator for Il2cppDictionaryIterator<'a,
     type Item = &'a Il2cppDictionaryEntry<K, V>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.current_index < *self.dictionary.get_count() {
+        match self.current_index < (*self.dictionary.get_count()).try_into().unwrap() {
             true => {
                 self.current_index += 1;
                 self.dictionary.get_entry(self.current_index - 1) 
@@ -119,6 +119,18 @@ impl<'a, K: TKey + 'a, V: TValue + 'a> Iterator for Il2cppDictionaryIterator<'a,
 }   
 
 impl<'a, K: TKey + 'a, V: TValue + 'a> IntoIterator for &'a Il2cppDictionary<K, V> {
+    type Item = &'a Il2cppDictionaryEntry<K, V>;
+    type IntoIter = Il2cppDictionaryIterator<'a, K, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Il2cppDictionaryIterator {
+            dictionary: self,
+            current_index: 0
+        }
+    }
+}
+
+impl<'a, K: TKey + 'a, V: TValue + 'a> IntoIterator for &'a mut Il2cppDictionary<K, V> {
     type Item = &'a Il2cppDictionaryEntry<K, V>;
     type IntoIter = Il2cppDictionaryIterator<'a, K, V>;
 

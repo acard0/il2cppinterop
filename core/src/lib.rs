@@ -16,6 +16,7 @@ pub mod cache;
 pub mod platform;
 pub mod utils;
 pub mod error;
+pub mod macros;
 
 #[cfg(target_os = "windows")]
 pub use platform::windows as sys;
@@ -57,7 +58,7 @@ pub unsafe fn initialize(timeout: Option<Duration>) -> bool {
     for i in 0..ExportObfuscationType::Max as i32 {
         EXPORT_OBFUSCATION = std::mem::transmute(i);
 
-        if let Some(export) = resolve_export(&IL2CPP_INIT_EXPORT) {
+        if let Some(export) = resolve_export(&IL2CPP_INIT) {
             init_export_resolved = true;
             log::info!("Export il2cpp_init located at {:p}", export);
             break;
@@ -145,38 +146,50 @@ unsafe fn initialize_unity() -> bool {
 fn initialize_export_map() -> HashMap<String, &'static mut *mut c_void> { unsafe {
     let mut export_map = HashMap::new();
 
-    export_map.insert(IL2CPP_CLASS_FROM_NAME_EXPORT.to_string(), &mut FUNCTIONS.m_class_from_name);
+    export_map.insert(IL2CPP_CLASS_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_from_name);
     export_map.insert(IL2CPP_CLASS_GET_FIELDS.to_string(), &mut FUNCTIONS.m_class_get_fields);
-    export_map.insert(IL2CPP_CLASS_GET_FIELD_FROM_NAME_EXPORT.to_string(), &mut FUNCTIONS.m_class_get_field_from_name);
+    export_map.insert(IL2CPP_CLASS_GET_FIELD_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_get_field_from_name);
     export_map.insert(IL2CPP_CLASS_GET_METHODS.to_string(), &mut FUNCTIONS.m_class_get_methods);
-    export_map.insert(IL2CPP_CLASS_GET_METHOD_FROM_NAME_EXPORT.to_string(), &mut FUNCTIONS.m_class_get_method_from_name);
-    export_map.insert(IL2CPP_CLASS_GET_PROPERTY_FROM_NAME_EXPORT.to_string(), &mut FUNCTIONS.m_class_get_property_from_name);
-    export_map.insert(IL2CPP_CLASS_GET_TYPE_EXPORT.to_string(), &mut FUNCTIONS.m_class_get_type);
-    export_map.insert(IL2CPP_TYPE_GET_CLASS_EXPORT.to_string(), &mut FUNCTIONS.m_type_get_class);
-    export_map.insert(IL2CPP_DOMAIN_GET_EXPORT.to_string(), &mut FUNCTIONS.m_domain_get);
-    export_map.insert(IL2CPP_DOMAIN_GET_ASSEMBLIES_EXPORT.to_string(), &mut FUNCTIONS.m_domain_get_assemblies);
-    export_map.insert(IL2CPP_IMAGE_GET_CLASS_EXPORT.to_string(), &mut FUNCTIONS.m_image_get_class);
-    export_map.insert(IL2CPP_IMAGE_GET_CLASS_COUNT_EXPORT.to_string(), &mut FUNCTIONS.m_image_get_class_count);
-    export_map.insert(IL2CPP_RESOLVE_FUNC_EXPORT.to_string(), &mut FUNCTIONS.m_resolve_function);
-    export_map.insert(IL2CPP_STRING_NEW_EXPORT.to_string(), &mut FUNCTIONS.m_string_new);
-    export_map.insert(IL2CPP_THREAD_ATTACH_EXPORT.to_string(), &mut FUNCTIONS.m_thread_attach);
-    export_map.insert(IL2CPP_THREAD_DETACH_EXPORT.to_string(), &mut FUNCTIONS.m_thread_detach);
-    export_map.insert(IL2CPP_TYPE_GET_OBJECT_EXPORT.to_string(), &mut FUNCTIONS.m_type_get_object);
-    export_map.insert(IL2CPP_OBJECT_NEW.to_string(), &mut FUNCTIONS.m_pobject_new);
+    export_map.insert(IL2CPP_CLASS_GET_METHOD_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_get_method_from_name);
+    export_map.insert(IL2CPP_CLASS_GET_PROPERTY_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_get_property_from_name);
+    export_map.insert(IL2CPP_CLASS_GET_TYPE.to_string(), &mut FUNCTIONS.m_class_get_type);
+
+    export_map.insert(IL2CPP_TYPE_GET_CLASS.to_string(), &mut FUNCTIONS.m_type_get_class);
+    export_map.insert(IL2CPP_DOMAIN_GET.to_string(), &mut FUNCTIONS.m_domain_get);
+    export_map.insert(IL2CPP_DOMAIN_GET_ASSEMBLIES.to_string(), &mut FUNCTIONS.m_domain_get_assemblies);
+    export_map.insert(IL2CPP_IMAGE_GET_CLASS.to_string(), &mut FUNCTIONS.m_image_get_class);
+    export_map.insert(IL2CPP_IMAGE_GET_CLASS_COUNT.to_string(), &mut FUNCTIONS.m_image_get_class_count);
+    export_map.insert(IL2CPP_RESOLVE_FUNC.to_string(), &mut FUNCTIONS.m_resolve_function);
+    export_map.insert(IL2CPP_STRING_NEW.to_string(), &mut FUNCTIONS.m_string_new);
+    export_map.insert(IL2CPP_OBJECT_NEW.to_string(), &mut FUNCTIONS.m_object_new);
+    export_map.insert(IL2CPP_TYPE_GET_OBJECT.to_string(), &mut FUNCTIONS.m_type_get_object);
     export_map.insert(IL2CPP_METHOD_GET_PARAM_NAME.to_string(), &mut FUNCTIONS.m_method_get_param_name);
     export_map.insert(IL2CPP_METHOD_GET_PARAM.to_string(), &mut FUNCTIONS.m_method_get_param);
     export_map.insert(IL2CPP_CLASS_FROM_IL2CPP_TYPE.to_string(), &mut FUNCTIONS.m_class_from_il2cpp_type);
     export_map.insert(IL2CPP_FIELD_STATIC_GET_VALUE.to_string(), &mut FUNCTIONS.m_field_static_get_value);
     export_map.insert(IL2CPP_FIELD_STATIC_SET_VALUE.to_string(), &mut FUNCTIONS.m_field_static_set_value);
+    export_map.insert(IL2CPP_OBJECT_UNBOX.to_string(), &mut FUNCTIONS.m_object_unbox);
+    export_map.insert(IL2CPP_VALUE_BOX.to_string(), &mut FUNCTIONS.m_value_box);
+
+    export_map.insert(IL2CPP_RUNTIME_INVOKE.to_string(), &mut FUNCTIONS.m_runtime_invoke);
+    
+    export_map.insert(IL2CPP_THREAD_ATTACH.to_string(), &mut FUNCTIONS.m_thread_attach);
+    export_map.insert(IL2CPP_THREAD_DETACH.to_string(), &mut FUNCTIONS.m_thread_detach);
+    export_map.insert(IL2CPP_THREAD_CURRENT.to_string(), &mut FUNCTIONS.m_thread_current);
 
     export_map.insert(IL2CPP_ALLOC.to_string(), &mut FUNCTIONS.m_alloc);
     export_map.insert(IL2CPP_FREE.to_string(), &mut FUNCTIONS.m_free);
     export_map.insert(IL2CPP_GC_DISABLE.to_string(), &mut FUNCTIONS.m_gc_disable);
     export_map.insert(IL2CPP_GC_ENABLE.to_string(), &mut FUNCTIONS.m_gc_enable);
+    export_map.insert(IL2CPP_GC_IS_DISABLED.to_string(), &mut FUNCTIONS.m_gc_is_disabled);
     export_map.insert(IL2CPP_GC_GET_USED_SIZE.to_string(), &mut FUNCTIONS.m_gc_get_used_size);
     export_map.insert(IL2CPP_GC_GET_HEAP_SIZE.to_string(), &mut FUNCTIONS.m_gc_get_heap_size);
     export_map.insert(IL2CPP_GC_CREATE_HANDLE.to_string(), &mut FUNCTIONS.m_gc_create_handle);
     export_map.insert(IL2CPP_GC_DESTROY_HANDLE.to_string(), &mut FUNCTIONS.m_gc_destroy_handle);
+    export_map.insert(IL2CPP_GC_WEAKREF_CREATE.to_string(), &mut FUNCTIONS.m_gc_create_weakref);
+    export_map.insert(IL2CPP_GC_WEAKREF_GET_TARGET.to_string(), &mut FUNCTIONS.m_gc_weakref_get_target);
+    export_map.insert(IL2CPP_GC_COLLECT.to_string(), &mut FUNCTIONS.m_gc_collect);
+    export_map.insert(IL2CPP_GC_COLLECT_A_LITTLE.to_string(), &mut FUNCTIONS.m_gc_collect_a_little);
 
     export_map
 }}

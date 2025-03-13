@@ -183,6 +183,8 @@ pub struct Il2CppClassInstanceInfo {
     pub cctor_thread: usize,
     pub generic_container_handle: *mut c_void,
     pub instance_size: u32,
+    #[cfg(feature = "unity_version_2022_3_8f1")] 
+    pub unknown: u32,
     pub actual_size: u32,
     pub element_size: u32,
     pub native_size: i32,

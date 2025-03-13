@@ -1,7 +1,7 @@
 use std::ffi::c_void;
 use std::ptr::null_mut;
 
-use crate::mono::runtime::*;
+use crate::mono::runtime;
 
 use super::*;
 
@@ -110,8 +110,9 @@ create_hook_mod!(hook_on_update);
 create_hook_mod!(hook_on_late_update);
 
 pub fn initialize() {
+    
     unsafe {
-        let il2cpp_thread = thread::attach(domain::get());
+        let il2cpp_thread = runtime::thread::attach(domain::get());
         let bhv = crate::unity::object::get_mono_behaviour();
         let mono_behaviour_vtable = bhv.get_vtable();
 
@@ -127,12 +128,13 @@ pub fn initialize() {
                 hook_on_late_update::initialize(vtable::find_function(mono_behaviour_vtable, 99, &[0x6A, 0x01, 0xE8]));
             }
         } else {
-            thread::detach(il2cpp_thread);    
+            runtime::thread::detach(il2cpp_thread);    
             return;
         }
 
-        thread::detach(il2cpp_thread);
+        runtime::thread::detach(il2cpp_thread);
     }
+     
 }
 
 pub fn uninitialize() {

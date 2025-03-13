@@ -12,6 +12,10 @@ pub fn detach(thread: *mut c_void) {
     unsafe { il2cpp_farproc!(fn(*mut c_void), FUNCTIONS.m_thread_detach)(thread) }
 }
 
+pub fn current() -> *mut c_void {
+    unsafe { il2cpp_farproc!(fn() -> *mut c_void, FUNCTIONS.m_thread_current)() }
+}
+
 #[derive(Clone)]
 pub struct CThread {
     on_start: *mut c_void,
