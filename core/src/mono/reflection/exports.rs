@@ -2,13 +2,16 @@ use crate::IL2CPP_RStr;
 
 IL2CPP_RStr!(IL2CPP_MAIN_MODULE, "GameAssembly.dll");
 IL2CPP_RStr!(IL2CPP_INIT, "il2cpp_init");
+
 IL2CPP_RStr!(IL2CPP_CLASS_FROM_NAME, "il2cpp_class_from_name");
+IL2CPP_RStr!(IL2CPP_CLASS_GET_NESTED_TYPES, "il2cpp_class_get_nested_types");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_FIELDS, "il2cpp_class_get_fields");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_FIELD_FROM_NAME, "il2cpp_class_get_field_from_name");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_METHODS, "il2cpp_class_get_methods");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_METHOD_FROM_NAME, "il2cpp_class_get_method_from_name");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_PROPERTY_FROM_NAME, "il2cpp_class_get_property_from_name");
 IL2CPP_RStr!(IL2CPP_CLASS_GET_TYPE, "il2cpp_class_get_type");
+
 IL2CPP_RStr!(IL2CPP_TYPE_GET_CLASS, "il2cpp_class_from_type");
 IL2CPP_RStr!(IL2CPP_DOMAIN_GET, "il2cpp_domain_get");
 IL2CPP_RStr!(IL2CPP_DOMAIN_GET_ASSEMBLIES, "il2cpp_domain_get_assemblies");

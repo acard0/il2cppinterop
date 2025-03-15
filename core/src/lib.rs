@@ -147,12 +147,14 @@ fn initialize_export_map() -> HashMap<String, &'static mut *mut c_void> { unsafe
     let mut export_map = HashMap::new();
 
     export_map.insert(IL2CPP_CLASS_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_from_name);
+    export_map.insert(IL2CPP_CLASS_GET_NESTED_TYPES.to_string(), &mut FUNCTIONS.m_class_get_nested_classes);
     export_map.insert(IL2CPP_CLASS_GET_FIELDS.to_string(), &mut FUNCTIONS.m_class_get_fields);
     export_map.insert(IL2CPP_CLASS_GET_FIELD_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_get_field_from_name);
     export_map.insert(IL2CPP_CLASS_GET_METHODS.to_string(), &mut FUNCTIONS.m_class_get_methods);
     export_map.insert(IL2CPP_CLASS_GET_METHOD_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_get_method_from_name);
     export_map.insert(IL2CPP_CLASS_GET_PROPERTY_FROM_NAME.to_string(), &mut FUNCTIONS.m_class_get_property_from_name);
     export_map.insert(IL2CPP_CLASS_GET_TYPE.to_string(), &mut FUNCTIONS.m_class_get_type);
+    export_map.insert(IL2CPP_CLASS_FROM_IL2CPP_TYPE.to_string(), &mut FUNCTIONS.m_class_from_il2cpp_type);
 
     export_map.insert(IL2CPP_TYPE_GET_CLASS.to_string(), &mut FUNCTIONS.m_type_get_class);
     export_map.insert(IL2CPP_DOMAIN_GET.to_string(), &mut FUNCTIONS.m_domain_get);
@@ -165,14 +167,13 @@ fn initialize_export_map() -> HashMap<String, &'static mut *mut c_void> { unsafe
     export_map.insert(IL2CPP_TYPE_GET_OBJECT.to_string(), &mut FUNCTIONS.m_type_get_object);
     export_map.insert(IL2CPP_METHOD_GET_PARAM_NAME.to_string(), &mut FUNCTIONS.m_method_get_param_name);
     export_map.insert(IL2CPP_METHOD_GET_PARAM.to_string(), &mut FUNCTIONS.m_method_get_param);
-    export_map.insert(IL2CPP_CLASS_FROM_IL2CPP_TYPE.to_string(), &mut FUNCTIONS.m_class_from_il2cpp_type);
     export_map.insert(IL2CPP_FIELD_STATIC_GET_VALUE.to_string(), &mut FUNCTIONS.m_field_static_get_value);
     export_map.insert(IL2CPP_FIELD_STATIC_SET_VALUE.to_string(), &mut FUNCTIONS.m_field_static_set_value);
     export_map.insert(IL2CPP_OBJECT_UNBOX.to_string(), &mut FUNCTIONS.m_object_unbox);
     export_map.insert(IL2CPP_VALUE_BOX.to_string(), &mut FUNCTIONS.m_value_box);
 
     export_map.insert(ILC2PP_ARRAY_NEW.to_string(), &mut FUNCTIONS.m_array_new);
-
+    
     export_map.insert(IL2CPP_RUNTIME_INVOKE.to_string(), &mut FUNCTIONS.m_runtime_invoke);
     
     export_map.insert(IL2CPP_THREAD_ATTACH.to_string(), &mut FUNCTIONS.m_thread_attach);

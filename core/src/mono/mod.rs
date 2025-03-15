@@ -63,12 +63,14 @@ pub fn encrypt_string(input: String) -> String {
 
 pub struct Functions {
     pub m_class_from_name: *mut c_void,
+    pub m_class_get_nested_classes: *mut c_void,
     pub m_class_get_fields: *mut c_void,
     pub m_class_get_field_from_name: *mut c_void,
     pub m_class_get_methods: *mut c_void,
     pub m_class_get_method_from_name: *mut c_void,
     pub m_class_get_property_from_name: *mut c_void,
     pub m_class_get_type: *mut c_void,
+    pub m_class_from_il2cpp_type: *mut c_void,
 
     pub m_resolve_function: *mut c_void,
     pub m_domain_get: *mut c_void,
@@ -81,14 +83,13 @@ pub struct Functions {
     pub m_string_new: *mut c_void,
     pub m_method_get_param_name: *mut c_void,
     pub m_method_get_param: *mut c_void,
-    pub m_class_from_il2cpp_type: *mut c_void,
     pub m_field_static_get_value: *mut c_void,
     pub m_field_static_set_value: *mut c_void,
     pub m_value_box: *mut c_void,
     pub m_object_unbox: *mut c_void,
-
-    pub m_array_new: *mut c_void,
     
+    pub m_array_new: *mut c_void,
+
     pub m_thread_attach: *mut c_void,
     pub m_thread_detach: *mut c_void,
     pub m_thread_current: *mut c_void,

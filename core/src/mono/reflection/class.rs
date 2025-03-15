@@ -8,17 +8,96 @@ use crate::{il2cpp_farproc, mono::{definitions::{object::ClassMemberType, stype:
 
 use super::*;
 
+pub fn find(class_path: &str) -> Option<&Il2cppClass> {
+    unsafe {
+        let mut cnt = 0;
+        let assemblies = domain::get_assemblies(&mut cnt);
+        if assemblies.is_null() || cnt == 0 {
+            return None;
+        }
+        if let Some(pos) = class_path.find('+') {
+            // Nested type: split namespace and type chain.
+            let ns_end = class_path[..pos].rfind('.').unwrap_or(0);
+            let ns = if ns_end > 0 { &class_path[..ns_end] } else { "" };
+            let mut parts = class_path[ns_end + 1..].split('+');
+            let root = parts.next()?;
+            let mut cls = (0..cnt).find_map(|i| {
+                let asm = *assemblies.add(i);
+                if asm.is_null() || (*asm).m_p_image.is_null() { return None; }
+                let c = get_from_name((*asm).m_p_image, ns, root);
+                if c.is_null() { None } else { Some(c) }
+            })?;
+            for name in parts {
+                cls = get_nested_classes(&*cls)
+                    .into_iter()
+                    .find(|nc| nc.get_class_name() == name)?;
+            }
+            Some(&*cls)
+        } else {
+            // Non-nested type.
+            let (ns, name) = class_path.rsplit_once('.').unwrap_or(("", class_path));
+            (0..cnt).find_map(|i| {
+                let asm = *assemblies.add(i);
+                if asm.is_null() || (*asm).m_p_image.is_null() { return None; }
+                let c = get_from_name((*asm).m_p_image, ns, name);
+                if c.is_null() { None } else { Some(c) }
+            }).map(|c| &*c)
+        }
+    }
+}
+
+pub fn fetch_classes(module_name: &str, namespace: Option<&str>) -> Vec<&'static Il2cppClass> {
+    unsafe {
+        let mut cnt = 0;
+        let assemblies = domain::get_assemblies(&mut cnt);
+        if assemblies.is_null() || cnt == 0 {
+            return Vec::new();
+        }
+
+        let image = (0..cnt)
+            .map(|i| *assemblies.add(i))
+            .find(|&asm| {
+                !asm.is_null() && !(*asm).m_p_image.is_null() &&
+                std::ffi::CStr::from_ptr((*(*asm).m_p_image).m_p_name_no_ext)
+                    .to_str()
+                    .unwrap_or("") == module_name
+            })
+            .map(|asm| (*asm).m_p_image)
+            .unwrap_or(std::ptr::null_mut());
+
+        if image.is_null() {
+            return Vec::new();
+        }
+
+        let class_count = il2cpp_farproc!(fn(*mut c_void) -> usize, FUNCTIONS.m_image_get_class_count)(image as *mut c_void);
+        (0..class_count)
+            .filter_map(|i| {
+                let class = &*il2cpp_farproc!(fn(*mut Il2cppImage, usize) -> *mut Il2cppClass, FUNCTIONS.m_image_get_class)(image, i);
+                match namespace {
+                    Some(ns) if class.get_class_namespace().unwrap_or("") == ns => Some(class),
+                    Some(_) => None,
+                    None => Some(class),
+                }
+            })
+            .collect()
+    }
+}
+
 pub fn iterate_fields(class: &Il2cppClass, iterator: &mut *mut c_void) -> Option<&'static mut Il2cppFieldInfo> {
     unsafe { il2cpp_farproc!(fn(&Il2cppClass, *mut *mut c_void) -> *mut Il2cppFieldInfo, FUNCTIONS.m_class_get_fields)(class, iterator).as_mut() }
+}
+
+pub fn iterate_methods(class: &Il2cppClass, iterator: &mut *mut c_void) -> Option<&'static mut Il2cppMethodInfo> {
+    unsafe {il2cpp_farproc!(fn(&Il2cppClass, *mut *mut c_void) -> *mut Il2cppMethodInfo, FUNCTIONS.m_class_get_methods)(class, iterator).as_mut() }
+}
+
+pub fn iterate_nested_classes(class: &Il2cppClass, iterator: &mut *mut c_void) -> Option<&'static mut Il2cppClass> {
+    unsafe { il2cpp_farproc!(fn(&Il2cppClass, *mut *mut c_void) -> *mut Il2cppClass, FUNCTIONS.m_class_get_nested_classes)(class, iterator).as_mut() }
 }
 
 pub fn get_fields(class: &Il2cppClass) -> Vec<&mut Il2cppFieldInfo> {
     let mut iterator: *mut c_void = unsafe { std::mem::zeroed() };
     std::iter::from_fn(|| iterate_fields(class, &mut iterator)).collect()
-}
-
-pub fn iterate_methods(class: &Il2cppClass, iterator: &mut *mut c_void) -> Option<&'static mut Il2cppMethodInfo> {
-    unsafe {il2cpp_farproc!(fn(&Il2cppClass, *mut *mut c_void) -> *mut Il2cppMethodInfo, FUNCTIONS.m_class_get_methods)(class, iterator).as_mut() }
 }
 
 pub fn get_methods(class: &Il2cppClass) -> Vec<&mut Il2cppMethodInfo> {
@@ -49,71 +128,13 @@ pub fn get_from_name(image: *mut Il2cppImage, namespace: &str, name: &str) -> *m
         (image as *mut c_void, sz_namespace.as_ptr(), sz_name.as_ptr())}
 }
 
-pub fn find(class_path: &str) -> Option<&Il2cppClass> {
-    unsafe {
-        let mut assemblies_count = 0;
-        let assemblies = domain::get_assemblies(&mut assemblies_count);
-        
-        if assemblies.is_null() || assemblies_count == 0 {
-            return None;
-        }
-
-        let (s_namespace, s_class) = class_path.rsplit_once('.').unwrap_or(("", class_path));
-
-        (0..assemblies_count).find_map(|i| {
-            let assembly = *assemblies.add(i);
-            (!assembly.is_null() && !(*assembly).m_p_image.is_null()).then(|| {
-                get_from_name((*assembly).m_p_image, s_namespace, s_class)
-            })
-            .filter(|&class| !class.is_null())
-        })
-        .map(|repr| &*repr)
-    }
-}
-
 pub fn get_system_type_by_name(class_name: &str) -> Option<&mut SystemType> {
     find(class_name).and_then(|repr| get_system_type(repr))
 }
 
-pub fn fetch_classes(module_name: &str, namespace: Option<&str>) -> Vec<&'static Il2cppClass> {
-    let mut vector = Vec::new();
-
-    unsafe {
-        let mut assemblies_count = 0;
-        let assemblies = domain::get_assemblies(&mut assemblies_count);
-        
-        if assemblies.is_null() || assemblies_count == 0 {
-            return vector;
-        }
-
-        let image = (0..assemblies_count)
-            .map(|i| *assemblies.add(i))
-            .find(|&assembly| {
-                !assembly.is_null() && !(*assembly).m_p_image.is_null()
-                    && std::ffi::CStr::from_ptr((*(*assembly).m_p_image).m_p_name_no_ext)
-                        .to_str()
-                        .unwrap_or("") == module_name
-            })
-            .map(|assembly| (*assembly).m_p_image)
-            .unwrap_or(null_mut());
-
-        if image.is_null() {
-            return vector;
-        }
-
-        let class_count = il2cpp_farproc!(fn(*mut c_void) -> usize, FUNCTIONS.m_image_get_class_count)(image as *mut c_void);
-        vector.extend((0..class_count).filter_map(|i| {
-            let class = &*il2cpp_farproc!(fn(*mut Il2cppImage, usize) -> *mut Il2cppClass, FUNCTIONS.m_image_get_class)(image, i);
-            match namespace {
-                Some(ns) => {
-                    (class.get_class_namespace().is_some_and(|namespace| namespace == ns)).then_some(class)
-                }
-                _ => Some(class),
-            }
-        }));
-    }
-    
-    vector
+pub fn get_nested_classes(class: &Il2cppClass) -> Vec<&'static mut Il2cppClass> {
+    let mut iterator: *mut c_void = unsafe { std::mem::zeroed() };
+    std::iter::from_fn(|| iterate_nested_classes(class, &mut iterator)).collect()
 }
 
 pub fn get_field(class: &Il2cppClass, name: &str) -> Option<&'static mut Il2cppFieldInfo> {
