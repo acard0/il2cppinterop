@@ -86,6 +86,8 @@ pub struct Functions {
     pub m_field_static_set_value: *mut c_void,
     pub m_value_box: *mut c_void,
     pub m_object_unbox: *mut c_void,
+
+    pub m_array_new: *mut c_void,
     
     pub m_thread_attach: *mut c_void,
     pub m_thread_detach: *mut c_void,

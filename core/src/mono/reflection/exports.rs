@@ -26,6 +26,8 @@ IL2CPP_RStr!(IL2CPP_FIELD_STATIC_SET_VALUE, "il2cpp_field_static_set_value");
 IL2CPP_RStr!(IL2CPP_VALUE_BOX, "il2cpp_value_box");
 IL2CPP_RStr!(IL2CPP_OBJECT_UNBOX, "il2cpp_object_unbox");
 
+IL2CPP_RStr!(ILC2PP_ARRAY_NEW, "il2cpp_array_new");
+
 IL2CPP_RStr!(IL2CPP_RUNTIME_INVOKE, "il2cpp_runtime_invoke");
 
 IL2CPP_RStr!(IL2CPP_THREAD_ATTACH, "il2cpp_thread_attach");

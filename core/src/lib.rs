@@ -171,6 +171,8 @@ fn initialize_export_map() -> HashMap<String, &'static mut *mut c_void> { unsafe
     export_map.insert(IL2CPP_OBJECT_UNBOX.to_string(), &mut FUNCTIONS.m_object_unbox);
     export_map.insert(IL2CPP_VALUE_BOX.to_string(), &mut FUNCTIONS.m_value_box);
 
+    export_map.insert(ILC2PP_ARRAY_NEW.to_string(), &mut FUNCTIONS.m_array_new);
+
     export_map.insert(IL2CPP_RUNTIME_INVOKE.to_string(), &mut FUNCTIONS.m_runtime_invoke);
     
     export_map.insert(IL2CPP_THREAD_ATTACH.to_string(), &mut FUNCTIONS.m_thread_attach);

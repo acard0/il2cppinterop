@@ -2,7 +2,7 @@ use std::{ffi::{c_int, c_void}, fmt::Debug, marker::PhantomData, ptr};
 
 use il2cppinterop_macros::Mono;
 
-use crate::mono::{reflection::meta::Il2cppClass, runtime::*};
+use crate::{il2cpp_farproc, mono::{reflection::meta::Il2cppClass, runtime::*, FUNCTIONS}};
 
 pub trait TArrayElement: Sized {}
 impl<T: Sized> TArrayElement for T {}
@@ -21,6 +21,11 @@ pub struct Il2cppArray<T: TArrayElement> {
 }
 
 impl<T: TArrayElement> Il2cppArray<T> {
+    /// Creates a new array with specified type & size
+    pub fn new(class: &Il2cppClass, size: usize) -> &Self {
+        unsafe { &*(il2cpp_farproc!(fn(*const Il2cppClass, usize) -> *mut c_void, FUNCTIONS.m_array_new)(class, size) as *mut Il2cppArray<T>) }
+    }
+
     /// Gets first subsequent mutable pointer that points to the item in this array
     pub fn get_data_head_mut(&mut self) -> *mut T {
         self.get_data_head() as *mut T
