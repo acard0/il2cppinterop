@@ -74,7 +74,7 @@ impl UnityObject {
     pub fn get_vtable(&self) -> *mut *mut c_void {
         unsafe { *(self.cached_ptr as *mut *mut *mut c_void) }
     }
-
+    
     pub fn get_name(&self) -> String {
         unsafe { il2cpp_farproc!(fn(&UnityObject) -> *mut SystemString, OBJECT_FUNCTIONS.m_get_name)
             (self)

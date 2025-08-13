@@ -1,6 +1,7 @@
 #![feature(c_variadic)]
 #![feature(new_range_api)]
 
+#![allow(static_mut_refs)]
 #![allow(dead_code)]
 
 use std::{collections::HashMap, ffi::{c_uchar, c_void, CString}, thread, time::Duration};
@@ -21,14 +22,13 @@ pub mod macros;
 #[cfg(target_os = "windows")]
 pub use platform::windows as sys;
 
-
 pub static mut EXPORT_OBFUSCATION: ExportObfuscationType = ExportObfuscationType::None;
 pub static mut ROT_OBFUSCATION_VALUE: i32 = -1;
 
 pub unsafe fn initialize(timeout: Option<Duration>) -> bool {
     log::info!("Initializing mem"); 
     mem::initialize().unwrap();
-
+    
     log::info!("Initializing il2cpp"); 
 
     GLOBALS.m_base = GetModuleHandleA(PCSTR::null()).expect("GetModuleHandleA base module returned null");
@@ -82,7 +82,7 @@ pub unsafe fn initialize(timeout: Option<Duration>) -> bool {
         return false;
     }
 
-    log::info!("Initializing Unity"); 
+    log::info!("il2cpp::init. OK"); 
 
     let unity_player = GetModuleHandleA(s!("UnityPlayer.dll"));
     if unity_player.is_err() {
@@ -97,7 +97,7 @@ pub unsafe fn initialize(timeout: Option<Duration>) -> bool {
         return false;
     }
 
-    log::info!("Initialization of il2cpp interop complete");
+    log::info!("unity::init. OK"); 
     true
 }
 
