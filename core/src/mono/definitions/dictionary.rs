@@ -107,7 +107,7 @@ impl<'a, K: TKey + 'a, V: TValue + 'a> Iterator for Il2cppDictionaryIterator<'a,
     type Item = &'a Il2cppDictionaryEntry<K, V>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.current_index < (*self.dictionary.get_count()).try_into().unwrap() {
+        match self.current_index < TryInto::<usize>::try_into(*self.dictionary.get_count()).unwrap() {
             true => {
                 self.current_index += 1;
                 self.dictionary.get_entry(self.current_index - 1) 

@@ -259,7 +259,7 @@ pub fn get_method_pointer_by_name(class_name: &str, method_name: &str, argc: i32
 }
 
 pub fn get_method_param_name(method_info: *mut Il2cppMethodInfo, index: u32,) -> Option<String> {
-    if index >= unsafe { (*method_info).parameter_count.into() } {
+    if index >= unsafe { Into::<u32>::into((*method_info).parameter_count) } {
         return None;
     }
 
@@ -275,7 +275,7 @@ pub fn get_method_param_name(method_info: *mut Il2cppMethodInfo, index: u32,) ->
 }
 
 pub fn get_method_param_type( method_info: *mut Il2cppMethodInfo, index: u32, ) -> *mut Il2cppType {
-    if index >= unsafe { (*method_info).parameter_count.into() } {
+    if index >= unsafe { Into::<u32>::into((*method_info).parameter_count) } {
         return null_mut();
     }
 
