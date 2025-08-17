@@ -240,18 +240,21 @@ pub fn get_member_type(class: &Il2cppClass, member_name: &str,) -> Option<(*mut 
     }
 }
 
-
-pub fn get_method_pointer(class: &Il2cppClass, method_name: &str, args: i32,) -> Option<*mut c_void> {
-    get_method(class, method_name, args)
+pub fn get_method_pointer(class: &Il2cppClass, method_name: &str, argc: i32,) -> Option<*mut c_void> {
+    get_method(class, method_name, argc)
         .map(|info| info.method_pointer)
 }
 
-pub fn get_method(class: &Il2cppClass, method_name: &str, args: i32) -> Option<&'static mut Il2cppMethodInfo> {
+pub fn get_method(class: &Il2cppClass, method_name: &str, argc: i32) -> Option<&'static mut Il2cppMethodInfo> {
     let c_method_name = CString::new(method_name).unwrap();
     unsafe { il2cpp_farproc!(fn(&Il2cppClass, *const i8, i32) -> *mut Il2cppMethodInfo, FUNCTIONS.m_class_get_method_from_name)
-        (class, c_method_name.as_ptr(), args)
+        (class, c_method_name.as_ptr(), argc)
         .as_mut()
     }
+}
+
+pub fn get_method_by_name(class_name: &str, method_name: &str, argc: i32) -> Option<&'static mut Il2cppMethodInfo> {
+    find(class_name).and_then(|repr| get_method(repr, method_name, argc))
 }
 
 pub fn get_method_pointer_by_name(class_name: &str, method_name: &str, argc: i32,) -> Option<*mut c_void> {
