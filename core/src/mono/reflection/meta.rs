@@ -149,7 +149,7 @@ impl Il2cppClass {
 #[derive(Debug)]
 #[repr(C)]
 pub struct Il2cppClassTypeInformation {
-    pub image: *mut c_void,
+    pub image: *mut Il2cppImage,
     pub gc_desc: *mut c_void,
     pub name: *const c_char,
     pub namespace: *const c_char,
@@ -303,6 +303,13 @@ pub struct Il2cppMethodInfo {
     pub slot: u16,
     pub parameter_count: u8,
     pub bitflags: u8,
+}
+
+impl Il2cppMethodInfo {
+    /// Gets the method name
+    pub fn get_name(&self) -> &str {
+        unsafe { CStr::from_ptr(self.name).to_str().unwrap() }
+    }
 }
 
 #[repr(C)]

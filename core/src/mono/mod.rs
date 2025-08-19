@@ -1,7 +1,7 @@
 use std::ffi::{c_char, c_void, CString};
 
+use definitions::object::SystemObject;
 use reflection::meta::Il2cppClass;
-use runtime::Il2cppObject;
 use windows::Win32::Foundation::HMODULE;
 
 use crate::il2cpp_farproc;
@@ -18,12 +18,12 @@ pub fn resolve_call(method_name: &str) -> *mut c_void { unsafe {
     std::mem::transmute::<_, unsafe extern "C" fn(*const c_char) -> *mut std::ffi::c_void>(FUNCTIONS.m_resolve_function)(sz_name.as_ptr())
 }}
 
-pub fn value_box(class: &Il2cppClass, value: *mut c_void) -> &mut Il2cppObject {
-    unsafe { &mut *il2cpp_farproc!(fn(*const Il2cppClass, *mut c_void) -> *mut Il2cppObject, FUNCTIONS.m_value_box)(class, value) }
+pub fn value_box(class: &Il2cppClass, value: *mut c_void) -> &mut SystemObject {
+    unsafe { &mut *il2cpp_farproc!(fn(*const Il2cppClass, *mut c_void) -> *mut SystemObject, FUNCTIONS.m_value_box)(class, value) }
 }
 
-pub fn object_unbox(value: &mut Il2cppObject) -> *mut c_void {
-    unsafe { il2cpp_farproc!(fn(*mut Il2cppObject) -> *mut c_void, FUNCTIONS.m_object_unbox)(value) }
+pub fn object_unbox(value: &mut SystemObject) -> *mut c_void {
+    unsafe { il2cpp_farproc!(fn(*mut SystemObject) -> *mut c_void, FUNCTIONS.m_object_unbox)(value) }
 }
 
 #[cfg(feature = "string_encryption")]

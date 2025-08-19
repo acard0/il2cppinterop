@@ -2,7 +2,7 @@ use std::ffi::c_void;
 
 use il2cppinterop_macros::Mono;
 
-use crate::{cache, il2cpp_farproc, mono::{definitions::{array::Il2cppArray, object::SystemObject, string::SystemString}, reflection::class, resolve_call, runtime::Il2cppObject}};
+use crate::{cache, il2cpp_farproc, mono::{definitions::{array::Il2cppArray, object::SystemObject, string::SystemString}, reflection::class, resolve_call}};
 
 use super::{component::UnityComponent, definitions::*, game_object::UnityGameObject};
 
@@ -18,8 +18,8 @@ pub fn initialize() {
     }
 }
 
-pub fn find_objects_of_type<T>(system_type: &Il2cppObject, include_inactive: bool,) -> Option<&mut Il2cppArray<T>> {
-    unsafe { il2cpp_farproc!(fn(&Il2cppObject, bool) -> *mut Il2cppArray<T>, OBJECT_FUNCTIONS.m_find_objects_of_type)
+pub fn find_objects_of_type<T>(system_type: &SystemObject, include_inactive: bool,) -> Option<&mut Il2cppArray<T>> {
+    unsafe { il2cpp_farproc!(fn(&SystemObject, bool) -> *mut Il2cppArray<T>, OBJECT_FUNCTIONS.m_find_objects_of_type)
         (system_type, include_inactive)
         .as_mut() 
     }
@@ -31,7 +31,7 @@ pub fn find_objects_of_type_by_name<T>(system_type_name: &str, include_inactive:
         .and_then(|system_type| find_objects_of_type(system_type, include_inactive))
 }
 
-pub fn find_object_of_type<T>(system_type: &Il2cppObject, include_inactive: bool,) -> Option<&T> {
+pub fn find_object_of_type<T>(system_type: &SystemObject, include_inactive: bool,) -> Option<&T> {
     find_objects_of_type::<T>(system_type, include_inactive)
         .and_then(|candidates: &mut Il2cppArray<T>| {
             for candidate in candidates.into_iter() {

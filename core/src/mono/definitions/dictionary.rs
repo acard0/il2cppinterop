@@ -5,9 +5,9 @@ use derive_more::derive::Debug;
 use getset::Getters;
 use il2cppinterop_macros::Mono;
 
-use super::*;
+use super::{object::SystemObject, *};
 
-use crate::{mono::runtime::*, platform::mem::{CheckedMutPointer, CheckedRefPointer}};
+use crate::platform::mem::{CheckedMutPointer, CheckedRefPointer};
 
 pub trait TKey: TArrayElement + PartialEq {}
 impl<K: TArrayElement + PartialEq> TKey for K {}
@@ -19,7 +19,7 @@ impl<V: TArrayElement> TValue for V {}
 #[repr(C)]
 pub struct Il2cppDictionary<K: TKey, V: TValue> {
     #[base]
-    base: Il2cppObject,
+    base: SystemObject,
     buckets: *mut Il2cppArray<i32>,
     entries: *mut Il2cppArray<Il2cppDictionaryEntry<K, V>>,
     #[getset(get = "pub with_prefix")]
@@ -31,7 +31,7 @@ pub struct Il2cppDictionary<K: TKey, V: TValue> {
     comparer: *mut c_void,
     keys: *mut c_void,
     values: *mut c_void,
-    sync_root: *mut Il2cppObject,
+    sync_root: *mut SystemObject,
 }
 
 impl<K: TKey, V: TValue> Il2cppDictionary<K, V> {

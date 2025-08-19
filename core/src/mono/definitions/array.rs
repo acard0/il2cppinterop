@@ -2,7 +2,9 @@ use std::{ffi::{c_int, c_void}, fmt::Debug, marker::PhantomData, ptr};
 
 use il2cppinterop_macros::Mono;
 
-use crate::{il2cpp_farproc, mono::{reflection::meta::Il2cppClass, runtime::*, FUNCTIONS}};
+use crate::{il2cpp_farproc, mono::{reflection::meta::Il2cppClass, FUNCTIONS}};
+
+use super::object::SystemObject;
 
 pub trait TArrayElement: Sized {}
 impl<T: Sized> TArrayElement for T {}
@@ -13,7 +15,7 @@ pub type MonoArrayXRef<T> = &'static Il2cppArray<T>;
 #[repr(C)]
 pub struct Il2cppArray<T: TArrayElement> {
     #[base]
-    object: Il2cppObject,           // 0x00
+    object: SystemObject,           // 0x00
     bounds: *mut Il2cppArrayBounds, // 0x08
     capacity: usize,                // 0x0C
     items: *mut c_void,             // 0x10
