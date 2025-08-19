@@ -1,10 +1,10 @@
 
-use std::{ffi::CString, mem::{transmute, zeroed}};
+use std::{mem::{transmute, zeroed}, ptr::null_mut};
 
 use getset::Getters;
 use il2cppinterop_macros::Mono;
 
-use crate::mono::{reflection::{self, meta::{Il2cppClass, Il2cppType}}, runtime};
+use crate::mono::{definitions::string::SystemString, reflection::{self, meta::{Il2cppClass, Il2cppType}}, runtime};
 
 use super::object::SystemObject;
 
@@ -31,17 +31,14 @@ impl SystemType {
     }
 
     pub fn get_type(name: &str) -> Option<&mut SystemType> {unsafe {
-        println!("getting type {}", name);
-
         let p_fn = reflection::class::get_method_by_name("System.Type", "GetType", 1)
             .expect("System.Type::GetType(string typeName) not found");
 
-        println!("getting type {}, method: {}", name, p_fn.get_name());
-
         let p_exception: *mut *mut SystemObject = zeroed();
-        let ns_system_type = CString::new(name).unwrap();
-        let params = [ ns_system_type.as_bytes_with_nul().as_ptr() ];
-        let boxed = runtime::runtime_invoke(p_fn, None, transmute(params.as_ptr()), p_exception);
-        boxed.map(|b| transmute(b))
+        let params = [ SystemString::new(name) ];
+        let boxed = runtime::runtime_invoke(p_fn, None, transmute(params.as_ptr()), p_exception)
+            .map(|m| m as *mut SystemObject).unwrap_or(null_mut());
+
+        transmute(boxed)
     }}
 }
