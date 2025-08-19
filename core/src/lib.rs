@@ -6,7 +6,7 @@
 
 use std::{collections::HashMap, ffi::{c_uchar, c_void, CString}, thread, time::Duration};
 
-use mono::{reflection::{callback, exports::*}, FUNCTIONS, GLOBALS};
+use mono::{reflection::exports::*, FUNCTIONS, GLOBALS};
 use platform::mem;
 use unity::*;
 use windows::{core::{s, PCSTR}, Win32::{Foundation::{FARPROC, HMODULE}, System::LibraryLoader::{GetModuleHandleA, GetProcAddress}}};
@@ -136,7 +136,6 @@ unsafe fn initialize_unity() -> bool {
     object::initialize();
     rigidbody::initialize();
     transform::initialize();
-    callback::initialize();
     time::initialize();
 
     cache::system_type_cache::initializer::pre_cache();
